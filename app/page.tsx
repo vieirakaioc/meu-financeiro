@@ -45,6 +45,16 @@ type Investimento = ContaInvestimentoProj & {
   instituicao?: string | null;
 };
 
+type LancamentoRecenteRow = {
+  id: string;
+  tipo: "receita" | "despesa";
+  descricao: string;
+  valor: number | string;
+  data_lancamento: string;
+  accounts?: { nome: string }[] | null;
+  categories?: { nome: string; cor?: string | null }[] | null;
+};
+
 type LancamentoRecente = {
   id: string;
   tipo: "receita" | "despesa";
@@ -165,7 +175,17 @@ export default function DashboardPage() {
           valor: number | string;
           data_lancamento: string;
         }>;
-        const recentesData = (transacoesRecentesRes.data ?? []) as LancamentoRecente[];
+        const recentesRows = (transacoesRecentesRes.data ?? []) as unknown as LancamentoRecenteRow[];
+
+        const recentesData: LancamentoRecente[] = recentesRows.map((item) => ({
+          id: item.id,
+          tipo: item.tipo,
+          descricao: item.descricao,
+          valor: item.valor,
+          data_lancamento: item.data_lancamento,
+          accounts: item.accounts?.[0] ?? null,
+          categories: item.categories?.[0] ?? null,
+        }));
 
         setContas(contasData);
         setInvestimentos(investimentosData);

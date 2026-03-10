@@ -105,18 +105,32 @@ async function updateEventStatus(wamid: string, status: string, transactionId?: 
 }
 
 export async function GET(req: NextRequest) {
-  const verifyToken = process.env.META_WHATSAPP_VERIFY_TOKEN;
+  const verifyToken = process.env.META_WHATSAPP_VERIFY_TOKEN?.trim() ?? "";
   const { searchParams } = new URL(req.url);
 
-  const mode = searchParams.get("hub.mode");
-  const token = searchParams.get("hub.verify_token");
-  const challenge = searchParams.get("hub.challenge");
+  const mode = searchParams.get("hub.mode")?.trim() ?? "";
+  const token = searchParams.get("hub.verify_token")?.trim() ?? "";
+  const challenge = searchParams.get("hub.challenge") ?? "";
 
-  if (mode === "subscribe" && token === verifyToken) {
+  if (mode === "subscribe" && token && verifyToken && token === verifyToken) {
     return new NextResponse(challenge, { status: 200 });
   }
 
-  return NextResponse.json({ error: "Verification failed" }, { status: 403 });
+  return NextResponse.json(
+    {
+      error: "Verification failed",
+      debug: {
+        mode,
+        hasChallenge: Boolean(challenge),
+        tokenReceived: Boolean(token),
+        verifyTokenLoaded: Boolean(verifyToken),
+        tokenLength: token.length,
+        verifyTokenLength: verifyToken.length,
+        equalAfterTrim: token === verifyToken,
+      },
+    },
+    { status: 403 }
+  );
 }
 
 export async function POST(req: NextRequest) {
